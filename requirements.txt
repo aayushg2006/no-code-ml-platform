@@ -1,0 +1,16 @@
+streamlit
+fastapi
+uvicorn
+python-multipart
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn
+xgboost
+optuna
+joblib
+matplotlib
+seaborn
+plotly
+shap
+# langchain
+# pandasai
