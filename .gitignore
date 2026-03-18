@@ -1,3 +1,11 @@
 temp_datasets
 temp_models
 temp_eda_reports
+models
+data/processed
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

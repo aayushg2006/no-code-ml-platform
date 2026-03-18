@@ -1,8 +1,10 @@
 import pandas as pd
+import numpy as np
 import os
 import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score, mean_squared_error, r2_score
+from sklearn.preprocessing import LabelEncoder  # NEW: Imported for safety encoding
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, GradientBoostingClassifier, GradientBoostingRegressor
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from xgboost import XGBClassifier, XGBRegressor
@@ -26,12 +28,20 @@ class ModelTrainer:
         y = df[target_column]
         X = df.drop(columns=[target_column])
         
+        is_classification = "Classification" in problem_type
+        
+        # --- NEW: XGBoost Strict 0-Index Fix ---
+        # If the target is numeric (like 1, 2, 3, 4), XGBoost will crash because it expects 0, 1, 2, 3.
+        # This safety net forces ALL classification targets to start at 0.
+        if is_classification:
+            le = LabelEncoder()
+            y = pd.Series(le.fit_transform(y), name=target_column)
+
         # 3. Train-Test Split (80% training, 20% testing)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
         
         # 4. Initialize the algorithms based on the problem type
         models = {}
-        is_classification = "Classification" in problem_type
         
         if is_classification:
             models = {
@@ -73,9 +83,9 @@ class ModelTrainer:
                     best_model_name = name
                     best_model_obj = model
             else:
-                rmse = mean_squared_error(y_test, predictions, squared=False)
+                rmse = np.sqrt(mean_squared_error(y_test, predictions))
                 r2 = r2_score(y_test, predictions)
-                leaderboard.append({"Model": name, "RMSE": round(rmse, 4), "R2-Score": round(r2, 4)})
+                leaderboard.append({"Model": name, "RMSE": round(float(rmse), 4), "R2-Score": round(float(r2), 4)})
                 
                 # Check if this is the best model (Lowest RMSE is best)
                 if rmse < best_score:
@@ -95,7 +105,7 @@ class ModelTrainer:
             "status": "success",
             "problem_type": problem_type,
             "best_model": best_model_name,
-            "best_score": round(best_score, 4),
+            "best_score": round(float(best_score), 4),
             "leaderboard": leaderboard,
             "model_path": model_path
         }

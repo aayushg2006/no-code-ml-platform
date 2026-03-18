@@ -16,6 +16,7 @@ from agents.dataset_agent import DatasetIntelligenceAgent
 from services.eda_service.analyzer import EDAService
 from services.feature_engineering_service.engineer import FeatureEngineer
 from services.training_service.trainer import ModelTrainer
+from services.inference_service.predictor import InferenceService
 
 app = FastAPI(
     title="No-Code ML Platform API Gateway",
@@ -137,6 +138,17 @@ async def train_models(dataset_id: str, target_column: str, problem_type: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/predict/{dataset_id}")
+async def predict_new_data(dataset_id: str, input_data: dict):
+    """
+    Receives a JSON dictionary of a single row of data, applies the saved 
+    transformations, and returns the AI's prediction.
+    """
+    try:
+        result = InferenceService.predict_single_record(dataset_id, input_data)
+        return JSONResponse(status_code=200, content=result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run("main_api:app", host="0.0.0.0", port=8000, reload=True)
